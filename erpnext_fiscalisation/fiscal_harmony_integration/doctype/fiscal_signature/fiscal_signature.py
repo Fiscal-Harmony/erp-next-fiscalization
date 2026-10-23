@@ -329,31 +329,30 @@ class FiscalSignature(Document):
         customer: Customer = frappe.get_doc("Customer", transaction.customer)
         customer_names = transaction.customer_name.split(r" t/a ")
 
-        contact_person: Contact = frappe.get_doc("Contact", transaction.contact_person)
-        billing_address: Address = frappe.get_doc(
-            "Address",
-            transaction.customer_address,
-        )
+        contact_person: Contact = frappe.get_doc("Contact", transaction.contact_person) if transaction.contact_person else None
+        billing_address: Address = frappe.get_doc("Address", transaction.customer_address,) if transaction.customer_address else None
 
         buyer_contact = {
             "Name": customer_names[0],
-            "Address": {
+        }
+        
+        if billing_address:
+            buyer_contact["Address"] = {
                 "Province": billing_address.country,
                 "Street": (
                     billing_address.address_line2 or billing_address.address_line1
                 ),
                 "HouseNo": billing_address.address_line1,
                 "City": billing_address.city,
-            },
-        }
+                }
 
         if len(customer_names) > 1:
             buyer_contact["TradeName"] = customer_names[1]
 
-        if contact_person.phone:
+        if contact_person and contact_person.phone:
             buyer_contact["Phone"] = contact_person.phone
 
-        if contact_person.email_id:
+        if contact_person and contact_person.email_id:
             buyer_contact["Email"] = contact_person.email_id
 
         if customer.tin_number:
